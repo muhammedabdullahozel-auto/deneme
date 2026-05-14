@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Borç Takip — Kredi Kartı & Esnek Hesap</title>
+  <link rel="stylesheet" href="styles.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+</head>
+<body>
+  <header class="topbar">
+    <h1>💳 Borç Takip</h1>
+    <nav class="tabs">
+      <button class="tab active" data-tab="dashboard">Özet</button>
+      <button class="tab" data-tab="accounts">Hesaplar</button>
+      <button class="tab" data-tab="plan">Ödeme Planı</button>
+      <button class="tab" data-tab="data">Veri</button>
+    </nav>
+  </header>
+
+  <main>
+    <!-- DASHBOARD -->
+    <section id="tab-dashboard" class="tab-content active">
+      <div class="kpi-grid">
+        <div class="kpi"><span class="kpi-label">Toplam Borç</span><span class="kpi-value" id="kpi-total">₺0</span></div>
+        <div class="kpi"><span class="kpi-label">Aylık Asgari</span><span class="kpi-value" id="kpi-min">₺0</span></div>
+        <div class="kpi"><span class="kpi-label">Aylık Faiz Yükü</span><span class="kpi-value" id="kpi-interest">₺0</span></div>
+        <div class="kpi"><span class="kpi-label">Hesap Sayısı</span><span class="kpi-value" id="kpi-count">0</span></div>
+      </div>
+
+      <div class="chart-grid">
+        <div class="card">
+          <h3>Borç Dağılımı</h3>
+          <canvas id="chart-distribution"></canvas>
+        </div>
+        <div class="card">
+          <h3>12 Aylık Ödeme Tahmini</h3>
+          <canvas id="chart-timeline"></canvas>
+        </div>
+      </div>
+    </section>
+
+    <!-- ACCOUNTS -->
+    <section id="tab-accounts" class="tab-content">
+      <div class="actions">
+        <button class="btn primary" id="btn-add">+ Yeni Hesap Ekle</button>
+      </div>
+      <div id="accounts-list" class="accounts-list"></div>
+    </section>
+
+    <!-- PAYMENT PLAN -->
+    <section id="tab-plan" class="tab-content">
+      <div class="card">
+        <h3>Ödeme Stratejisi</h3>
+        <div class="strategy">
+          <label>Aylık ayırabileceğin toplam ödeme:</label>
+          <input type="number" id="monthly-budget" placeholder="örn. 5000" min="0" step="100" />
+          <select id="strategy-select">
+            <option value="avalanche">Çığ (yüksek faizden başla) — en az faiz</option>
+            <option value="snowball">Kartopu (küçük borçtan başla) — motivasyon</option>
+            <option value="minimum">Sadece asgari öde</option>
+          </select>
+          <button class="btn primary" id="btn-calc-plan">Plan Oluştur</button>
+        </div>
+      </div>
+      <div id="plan-summary" class="card hidden">
+        <h3>Sonuç</h3>
+        <div id="plan-summary-content"></div>
+      </div>
+      <div id="plan-table-wrap" class="card hidden">
+        <h3>Aylık Taksit Takvimi</h3>
+        <div class="table-scroll">
+          <table id="plan-table">
+            <thead></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- DATA -->
+    <section id="tab-data" class="tab-content">
+      <div class="card">
+        <h3>Veri Yönetimi</h3>
+        <p class="muted">Verilerin tarayıcında saklanır. JSON olarak indirip yedekleyebilir, başka cihazda geri yükleyebilirsin.</p>
+        <div class="actions">
+          <button class="btn" id="btn-export">JSON Olarak İndir</button>
+          <label class="btn">
+            JSON Yükle
+            <input type="file" id="file-import" accept="application/json" hidden />
+          </label>
+          <button class="btn danger" id="btn-clear">Tüm Verileri Sil</button>
+        </div>
+      </div>
+      <div class="card">
+        <h3>Örnek Veri</h3>
+        <p class="muted">Hızlı test için örnek hesaplar yükle.</p>
+        <button class="btn" id="btn-seed">Örnek Veri Yükle</button>
+      </div>
+    </section>
+  </main>
+
+  <!-- MODAL -->
+  <div id="modal" class="modal hidden">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 id="modal-title">Yeni Hesap</h3>
+        <button class="close" id="modal-close">&times;</button>
+      </div>
+      <form id="account-form">
+        <input type="hidden" id="f-id" />
+        <label>Hesap Türü
+          <select id="f-type" required>
+            <option value="credit_card">Kredi Kartı</option>
+            <option value="flex_account">Esnek Hesap</option>
+          </select>
+        </label>
+        <label>İsim (örn. Garanti Bonus, Yapı Kredi KMH)
+          <input type="text" id="f-name" required maxlength="60" />
+        </label>
+        <label>Mevcut Borç (₺)
+          <input type="number" id="f-balance" required min="0" step="0.01" />
+        </label>
+        <label>Yıllık Faiz Oranı (%) — aylık değil!
+          <input type="number" id="f-apr" required min="0" max="500" step="0.01" />
+        </label>
+        <label>Aylık Asgari Ödeme (₺)
+          <input type="number" id="f-min" required min="0" step="0.01" />
+        </label>
+        <label class="cc-only">Hesap Kesim Günü (1-31)
+          <input type="number" id="f-cutoff" min="1" max="31" step="1" />
+        </label>
+        <label class="cc-only">Son Ödeme Günü (1-31)
+          <input type="number" id="f-duedate" min="1" max="31" step="1" />
+        </label>
+        <label>Notlar
+          <textarea id="f-notes" rows="2" maxlength="200"></textarea>
+        </label>
+        <div class="modal-actions">
+          <button type="button" class="btn" id="btn-cancel">İptal</button>
+          <button type="submit" class="btn primary">Kaydet</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div id="toast" class="toast hidden"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>

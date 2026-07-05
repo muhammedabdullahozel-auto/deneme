@@ -1,0 +1,20 @@
+{
+  "name": "101 Okey",
+  "short_name": "101 Okey",
+  "description": "3 bota karşı oynanan 101 Okey oyunu",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0d3b2e",
+  "theme_color": "#0d3b2e",
+  "lang": "tr",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

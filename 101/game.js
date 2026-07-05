@@ -549,42 +549,61 @@ function render() {
   document.getElementById('btnDiscard').disabled = !(act && selCount === 1);
 }
 
-/* ---------- Olaylar ---------- */
+/* ---------- Olaylar ----------
+   Bazı mobil webview'lerde click olayı hiç üretilmiyor; pointerup + click
+   birlikte dinlenir, 400 ms içinde geleni tek dokunuş sayılır. Kaydırma
+   dokunuş sayılmasın diye parmak 12 px'ten fazla hareket ettiyse yok sayılır. */
 
-document.getElementById('deck').addEventListener('click', drawFromDeck);
+function onTap(el, handler) {
+  let last = 0, sx = 0, sy = 0;
+  const fire = e => {
+    const now = Date.now();
+    if (now - last < 400) return;
+    last = now;
+    handler(e);
+  };
+  el.addEventListener('pointerdown', e => { sx = e.clientX; sy = e.clientY; });
+  el.addEventListener('pointerup', e => {
+    if (Math.abs(e.clientX - sx) > 12 || Math.abs(e.clientY - sy) > 12) return;
+    fire(e);
+  });
+  el.addEventListener('click', fire);
+}
 
-document.getElementById('prevDiscard').addEventListener('click', e => {
+onTap(document.getElementById('deck'), drawFromDeck);
+
+onTap(document.getElementById('prevDiscard'), e => {
   if (e.target.closest('[data-take]')) takeDiscard();
 });
 
-document.getElementById('rack').addEventListener('click', e => {
+onTap(document.getElementById('rack'), e => {
   const el = e.target.closest('.tile');
   if (el) toggleTile(Number(el.dataset.id));
 });
 
-document.getElementById('tableMelds').addEventListener('click', e => {
+onTap(document.getElementById('tableMelds'), e => {
   const el = e.target.closest('.meld');
   if (el && el.dataset.meld !== undefined) tryWork(Number(el.dataset.meld));
 });
 
-document.getElementById('btnMeld').addEventListener('click', doMeld);
-document.getElementById('btnOpen').addEventListener('click', doOpen);
-document.getElementById('btnDiscard').addEventListener('click', doDiscard);
-document.getElementById('btnUnstage').addEventListener('click', doUnstage);
+onTap(document.getElementById('btnMeld'), doMeld);
+onTap(document.getElementById('btnOpen'), doOpen);
+onTap(document.getElementById('btnDiscard'), doDiscard);
+onTap(document.getElementById('btnUnstage'), doUnstage);
 
-document.getElementById('btnSort').addEventListener('click', () => {
+onTap(document.getElementById('btnSort'), () => {
   sortMode = 1 - sortMode;
   sortRack();
   render();
 });
 
-document.getElementById('btnNew').addEventListener('click', () => {
+onTap(document.getElementById('btnNew'), () => {
   if (S && !S.over && !confirm('Oyunu yeniden başlatmak istiyor musun?')) return;
   document.getElementById('modal').classList.add('hidden');
   newGame();
 });
 
-document.getElementById('btnRestart').addEventListener('click', () => {
+onTap(document.getElementById('btnRestart'), () => {
   document.getElementById('modal').classList.add('hidden');
   newGame();
 });

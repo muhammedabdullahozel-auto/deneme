@@ -362,7 +362,8 @@ function selectedTiles() {
 }
 
 function drawFromDeck() {
-  if (!myTurn() || S.phase !== 'draw') return;
+  if (!myTurn()) { S.status = 'Sıra botlarda, birazdan sana gelecek…'; render(); return; }
+  if (S.phase !== 'draw') { S.status = 'Bu tur taş çekmiyorsun — per yapabilir ya da tek taş seçip "Taş At" diyebilirsin.'; render(); return; }
   if (!S.deck.length) { endGame(null); return; }
   me().hand.push(S.deck.pop());
   S.phase = 'action';
@@ -371,7 +372,8 @@ function drawFromDeck() {
 }
 
 function takeDiscard() {
-  if (!myTurn() || S.phase !== 'draw') return;
+  if (!myTurn()) { S.status = 'Sıra botlarda, birazdan sana gelecek…'; render(); return; }
+  if (S.phase !== 'draw') { S.status = 'Bu tur taş almıyorsun — per yapabilir ya da tek taş seçip "Taş At" diyebilirsin.'; render(); return; }
   const pd = S.discards[3];
   if (!pd.length) return;
   const t = pd.pop();
@@ -514,6 +516,7 @@ function render() {
 
   // Orta alan
   document.getElementById('deckCount').textContent = S.deck.length;
+  document.getElementById('deck').classList.toggle('takeable', myTurn() && S.phase === 'draw');
   const ind = S.indicator;
   document.getElementById('indicatorWrap').innerHTML =
     `<div class="tile ${ind.color}"><span class="num">${ind.num}</span></div>`;
